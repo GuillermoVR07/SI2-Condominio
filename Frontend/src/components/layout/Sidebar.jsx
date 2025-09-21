@@ -7,7 +7,7 @@ const Sidebar = () => {
   const menuItems = [
     { id: 1, name: 'Inicio', icon: <FaHome />, path: '/' },
     { id: 2, name: 'Usuarios', icon: <FaUsers />, path: '/residents' },
-    { id: 3, name: 'Administración Interna', icon: <FaCog />, path: '/units' },
+    { id: 3, name: 'Administración Interna', icon: <FaCog />, path: '/internal-admin' },
     { id: 4, name: 'Finanzas y Áreas Comunes', icon: <FaBuilding />, path: '#' },
     { id: 5, name: 'Comunicación y Atención al Residente', icon: <FaBullhorn />, path: '/communications' },
     { id: 6, name: 'Seguridad y Accesos', icon: <FaShieldAlt />, path: '#' },

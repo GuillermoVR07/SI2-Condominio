@@ -1,68 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Usaremos axios para las llamadas a la API
+import axios from 'axios';
 
-// Importaremos los componentes que vamos a crear
+// Componentes
 import ResidentTable from '../components/residents/ResidentTable';
-import Pagination from '../components/ui/Pagination';
+import ResidentFormModal from '../components/residents/ResidentFormModal';
+import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal'; // Reutilizamos este modal
 import SearchBar from '../components/ui/SearchBar';
 import Button from '../components/ui/Button';
-
-// Datos de ejemplo mientras no tenemos backend
-const mockResidents = [
-    { id: 1, name: "Lolita O'Hara", ci: "90133164", email: "arjun.schmidt@example.org", type: "Otro" },
-    { id: 2, name: "Jo Keeling", ci: "01197617", email: "mertz.stefan@example.org", type: "Propietario" },
-    { id: 3, name: "Craig Schmitt", ci: "28951081", email: "queenie43@example.net", type: "Propietario" },
-    { id: 4, name: "Sammy Willms", ci: "65082919", email: "glover.gudrun@example.com", type: "Otro" },
-    { id: 5, name: "Kiarra Ledner", ci: "69863639", email: "darby.satterfield@example.net", type: "Propietario" },
-    { id: 6, name: "Raquel Nader", ci: "45404689", email: "pollich.terrill@example.org", type: "Otro" },
-    { id: 7, name: "Floyd Davis", ci: "53157449", email: "kautzer.yolanda@example.com", type: "Inquilino" },
-    { id: 8, name: "Pete Kunze", ci: "32305248", email: "bertrand.kautzer@example.net", type: "Inquilino" },
-    { id: 9, name: "Sasha Luettgen", ci: "92390791", email: "neil37@example.com", type: "Otro" },
-    { id: 10, name: "Felton Will", ci: "18418139", email: "queenie43@example.net", type: "Inquilino" },
-];
-
+import Pagination from '../components/ui/Pagination';
 
 const ResidentsPage = () => {
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [currentResident, setCurrentResident] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- ESPACIO PARA LA LLAMADA A LA API ---
-    useEffect(() => {
-        const fetchResidents = async () => {
+    // Estados para controlar la visibilidad de los modales
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // --- FUNCIÓN PARA OBTENER DATOS (GET) CON BÚSQUEDA ---
+    const fetchResidents = async (query = '') => {
+        try {
             setLoading(true);
-            try {
-                // Cuando tengas la API, esta será la llamada real.
-                // La URL incluiría la página actual y el término de búsqueda.
-                // const response = await axios.get(`/api/residents?page=${currentPage}&search=${searchTerm}`);
-                // setResidents(response.data.residents);
-                // setTotalPages(response.data.totalPages);
+            const response = await axios.get(`/api/residents?search=${query}`); // <-- URL dinámica para la búsqueda
 
-                // Por ahora, usamos los datos de ejemplo
-                console.log(`Buscando: "${searchTerm}" en la página ${currentPage}`);
-                setResidents(mockResidents);
-                setTotalPages(6); // Simulamos que hay 6 páginas en total
-                
-            } catch (error) {
-                console.error("Error al obtener los residentes:", error);
-            } finally {
-                setLoading(false);
+            // **Programación Defensiva**
+            if (Array.isArray(response.data)) {
+                setResidents(response.data);
+            } else {
+                console.warn("La respuesta de la API para residentes no es un array. Se usará un array vacío.");
+                setResidents([]);
             }
-        };
+        } catch (error) {
+            console.error("Error al obtener los residentes:", error);
+            setResidents([]); // Evita que la app se rompa en caso de error
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // --- useEffect CON "DEBOUNCER" PARA LA BÚSQUEDA ---
+    useEffect(() => {
         const timer = setTimeout(() => {
-            fetchResidents();
-        }, 500); // Pequeño delay para simular la búsqueda
+            fetchResidents(searchTerm);
+        }, 500); // Espera 500ms después de que el usuario deja de escribir para buscar
 
-        return () => clearTimeout(timer); // Limpia el timer si el componente se desmonta
+        return () => clearTimeout(timer); // Limpia el temporizador
+    }, [searchTerm]); // Se ejecuta cada vez que 'searchTerm' cambia
 
-    }, [currentPage, searchTerm]); // Se ejecuta cada vez que cambia la página o el término de búsqueda
+    // --- MANEJADORES DE ACCIONES ---
 
-    const handleSearch = (query) => {
-        setSearchTerm(query);
-        setCurrentPage(1); // Reinicia a la primera página con cada nueva búsqueda
+    const handleNew = () => {
+        setCurrentResident(null);
+        setIsFormModalOpen(true);
+    };
+
+    const handleEdit = (resident) => {
+        setCurrentResident(resident);
+        setIsFormModalOpen(true);
+    };
+
+    const handleDelete = (resident) => {
+        setCurrentResident(resident);
+        setIsDeleteModalOpen(true);
+    };
+
+    // --- LÓGICA CRUD (CREATE/POST, UPDATE/PUT) ---
+    const handleSave = async (residentData) => {
+        try {
+            if (currentResident) {
+                // UPDATE (PUT)
+                await axios.put(`/api/residents/${currentResident.id}`, residentData);
+            } else {
+                // CREATE (POST)
+                await axios.post('/api/residents', residentData);
+            }
+            setIsFormModalOpen(false);
+            fetchResidents(searchTerm); // Recarga los datos manteniendo el filtro de búsqueda
+        } catch (error) {
+            console.error("Error al guardar el residente:", error);
+        }
+    };
+
+    // --- LÓGICA CRUD (DELETE) ---
+    const confirmDelete = async () => {
+        try {
+            await axios.delete(`/api/residents/${currentResident.id}`);
+            setIsDeleteModalOpen(false);
+            fetchResidents(searchTerm); // Recarga los datos manteniendo el filtro
+        } catch (error) {
+            console.error("Error al eliminar el residente:", error);
+        }
     };
 
     return (
@@ -71,24 +100,45 @@ const ResidentsPage = () => {
             
             <div className="flex justify-between items-center mb-6">
                 <div className="w-1/3">
-                    <SearchBar onSearch={handleSearch} />
+                    <SearchBar onSearch={setSearchTerm} />
                 </div>
-                <Button>Nuevo Residente</Button>
+                <Button onClick={handleNew}>Nuevo Residente</Button>
             </div>
 
             {loading ? (
                 <p>Cargando residentes...</p>
             ) : (
-                <ResidentTable residents={residents} />
+                <ResidentTable 
+                    residents={residents}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
             )}
             
             <div className="mt-6 flex justify-center">
                 <Pagination 
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={(page) => setCurrentPage(page)}
+                    currentPage={1}
+                    totalPages={5} // Esto debería venir de la API en un futuro
+                    onPageChange={(page) => console.log(`Cambiando a la página ${page}`)}
                 />
             </div>
+
+            {/* --- Modales --- */}
+            {isFormModalOpen && (
+                <ResidentFormModal
+                    resident={currentResident}
+                    onClose={() => setIsFormModalOpen(false)}
+                    onSave={handleSave}
+                />
+            )}
+
+            {isDeleteModalOpen && (
+                <ConfirmDeleteModal
+                    unitName={currentResident?.name}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={confirmDelete}
+                />
+            )}
         </div>
     );
 };

@@ -9,7 +9,7 @@ import { FaUsers, FaCog, FaDollarSign, FaComments, FaShieldAlt, FaChartBar, FaBo
 // Datos de ejemplo (esto vendrá del backend)
 const mockModules = [
   { id: 1, title: 'Usuarios', icon: <FaUsers />, color: 'blue', path: '/residents' },
-  { id: 2, title: 'Administración Interna', icon: <FaCog />, color: 'gray', path: '/units' },
+  { id: 2, title: 'Administración Interna', icon: <FaCog />, color: 'gray', path: '/internal-admin' },
   { id: 3, title: 'Finanzas y Áreas Comunes', icon: <FaDollarSign />, color: 'green' },
   { id: 4, title: 'Comunicación y Atención al Residente', icon: <FaComments />, color: 'cyan', path: '/communications' },
   { id: 5, title: 'Seguridad y Accesos', icon: <FaShieldAlt />, color: 'yellow' },

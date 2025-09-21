@@ -1,17 +1,6 @@
 import React from 'react';
 
-const ResidentTable = ({ residents }) => {
-
-    const handleEdit = (id) => {
-        console.log(`Editar residente con ID: ${id}`);
-        // Aquí iría la lógica para abrir un modal o ir a una página de edición
-    };
-
-    const handleDelete = (id) => {
-        console.log(`Eliminar residente con ID: ${id}`);
-        // Aquí iría la lógica para mostrar una confirmación y llamar a la API de borrado
-    };
-
+const ResidentTable = ({ residents, onEdit, onDelete }) => {
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full bg-white">
@@ -35,13 +24,13 @@ const ResidentTable = ({ residents }) => {
                             <td className="text-left py-3 px-4">{resident.type}</td>
                             <td className="text-left py-3 px-4">
                                 <button 
-                                    onClick={() => handleEdit(resident.id)}
+                                    onClick={() => onEdit(resident)}
                                     className="bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-yellow-600 mr-2"
                                 >
                                     Editar
                                 </button>
                                 <button 
-                                    onClick={() => handleDelete(resident.id)}
+                                    onClick={() => onDelete(resident)}
                                     className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600"
                                 >
                                     Eliminar

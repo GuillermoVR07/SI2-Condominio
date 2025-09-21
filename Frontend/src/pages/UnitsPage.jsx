@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-// Componentes que crearemos a continuación
+// Componentes
 import UnitsTable from '../components/units/UnitsTable';
 import SearchBar from '../components/ui/SearchBar';
 import Button from '../components/ui/Button';
@@ -9,39 +10,57 @@ import UnitFormModal from '../components/units/UnitFormModal';
 import ViewUnitModal from '../components/units/ViewUnitModal';
 import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal';
 
-// Datos de ejemplo
-const mockUnits = [
-    { id: 1, code: "U-214", resident: "Theresia Price", plate: "TIP-1724", brand: "Toyota", capacity: 6, status: "Activa", people: 4, pets: "No", vehicles: 2 },
-    { id: 2, code: "U-339", resident: "Oliver DuBuque", plate: "QOQ-6664", brand: "Kia", capacity: 1, status: "Activa", people: 5, pets: "No", vehicles: 3 },
-    { id: 3, code: "U-772", resident: "Kendall Champlin", plate: "KCR-2358", brand: "Honda", capacity: 1, status: "Activa", people: 3, pets: "Sí", vehicles: 1 },
-    { id: 4, code: "U-696", resident: "Bert Hamill", plate: "YZG-5806", brand: "Ford", capacity: 3, status: "Activa", people: 5, pets: "Sí", vehicles: 2 },
-    { id: 5, code: "U-593", resident: "Will Anderson", plate: "GEX-8870", brand: "Nissan", capacity: 6, status: "Activa", people: 1, pets: "Sí", vehicles: 1 },
-    { id: 6, code: "U-319", resident: "Donald Abbott", plate: "WLP-1914", brand: "Ford", capacity: 5, status: "Inactiva", people: 5, pets: "No", vehicles: 1 },
-];
-
 const UnitsPage = () => {
     const [units, setUnits] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentUnit, setCurrentUnit] = useState(null); // Para saber qué unidad estamos viendo/editando/eliminando
+    const [currentUnit, setCurrentUnit] = useState(null);
 
-    // Estados para controlar la visibilidad de cada modal
+    // --- NUEVO ESTADO PARA EL TÉRMINO DE BÚSQUEDA ---
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Estados para controlar la visibilidad de cada modal (sin cambios)
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     
-    // --- LÓGICA PARA LA API (A FUTURO) ---
-    useEffect(() => {
-        // Aquí llamarías a tu API para obtener las unidades
-        setTimeout(() => {
-            setUnits(mockUnits);
-            setLoading(false);
-        }, 500);
-    }, []);
+    // --- FUNCIÓN fetchUnits MODIFICADA PARA ACEPTAR UN PARÁMETRO DE BÚSQUEDA ---
+    const fetchUnits = async (query = '') => {
+        try {
+            setLoading(true);
+            // La URL ahora es dinámica. Incluirá el parámetro 'search' si 'query' no está vacío.
+            const response = await axios.get(`/api/units?search=${query}`); 
 
-    // --- MANEJADORES DE ACCIONES ---
+            // Programación Defensiva (sin cambios)
+            if (Array.isArray(response.data)) {
+                setUnits(response.data);
+            } else {
+                console.warn("La respuesta de la API para unidades no es un array. Se usará un array vacío.");
+                setUnits([]);
+            }
+        } catch (error) {
+            console.error("Error al obtener las unidades:", error);
+            setUnits([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- useEffect MODIFICADO PARA MANEJAR LA BÚSQUEDA CON "DEBOUNCING" ---
+    // Este efecto se ejecuta cuando el componente carga y cada vez que 'searchTerm' cambia.
+    useEffect(() => {
+        // Se crea un temporizador que esperará 500ms antes de ejecutar la búsqueda.
+        const timer = setTimeout(() => {
+            fetchUnits(searchTerm);
+        }, 500); // 500ms = medio segundo
+
+        // Función de limpieza: si el usuario sigue escribiendo, el temporizador anterior se cancela.
+        return () => clearTimeout(timer);
+    }, [searchTerm]); // El array de dependencias asegura que esto se ejecute solo cuando 'searchTerm' cambie.
+
+    // --- MANEJADORES DE ACCIONES (sin cambios en su lógica interna) ---
 
     const handleNew = () => {
-        setCurrentUnit(null); // No hay unidad actual al crear una nueva
+        setCurrentUnit(null);
         setIsFormModalOpen(true);
     };
 
@@ -60,22 +79,32 @@ const UnitsPage = () => {
         setIsDeleteModalOpen(true);
     };
 
-    const handleSaveUnit = (unitData) => {
-        // Lógica para guardar (Crear o Actualizar)
-        if (currentUnit) {
-            // --- ESPACIO PARA API (UPDATE) ---
-            console.log("Actualizando unidad:", unitData);
-        } else {
-            // --- ESPACIO PARA API (CREATE) ---
-            console.log("Creando nueva unidad:", unitData);
+    // --- FUNCIÓN PARA GUARDAR MODIFICADA ---
+    const handleSaveUnit = async (unitData) => {
+        try {
+            if (currentUnit) {
+                await axios.put(`/api/units/${currentUnit.id}`, unitData);
+            } else {
+                await axios.post('/api/units', unitData);
+            }
+            setIsFormModalOpen(false);
+            // Recarga los datos manteniendo el filtro de búsqueda actual
+            await fetchUnits(searchTerm); 
+        } catch (error) {
+            console.error("Error al guardar la unidad:", error);
         }
-        setIsFormModalOpen(false); // Cierra el modal después de guardar
     };
 
-    const confirmDelete = () => {
-        // --- ESPACIO PARA API (DELETE) ---
-        console.log("Eliminando unidad:", currentUnit.id);
-        setIsDeleteModalOpen(false); // Cierra el modal
+    // --- FUNCIÓN PARA ELIMINAR MODIFICADA ---
+    const confirmDelete = async () => {
+        try {
+            await axios.delete(`/api/units/${currentUnit.id}`);
+            setIsDeleteModalOpen(false);
+            // Recarga los datos manteniendo el filtro de búsqueda actual
+            await fetchUnits(searchTerm); 
+        } catch (error) {
+            console.error("Error al eliminar la unidad:", error);
+        }
     };
 
     return (
@@ -84,7 +113,8 @@ const UnitsPage = () => {
             
             <div className="flex justify-between items-center mb-6">
                 <div className="w-1/3">
-                    <SearchBar onSearch={(query) => console.log(query)} />
+                    {/* El SearchBar ahora actualiza el estado 'searchTerm' directamente */}
+                    <SearchBar onSearch={setSearchTerm} />
                 </div>
                 <Button onClick={handleNew}>Nueva Unidad</Button>
             </div>
@@ -104,7 +134,7 @@ const UnitsPage = () => {
                 <Pagination currentPage={1} totalPages={2} onPageChange={(page) => console.log(page)} />
             </div>
 
-            {/* --- MODALES --- */}
+            {/* --- MODALES (sin cambios) --- */}
             {isFormModalOpen && (
                 <UnitFormModal 
                     unit={currentUnit}

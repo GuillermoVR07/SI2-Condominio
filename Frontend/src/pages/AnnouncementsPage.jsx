@@ -1,32 +1,48 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-// Componentes que crearemos
+// Componentes
 import AnnouncementsTable from '../components/announcements/AnnouncementsTable';
 import AnnouncementFormModal from '../components/announcements/AnnouncementFormModal';
-import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal'; // Reutilizamos el modal de confirmación!
+import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal'; // Reutilizamos este modal
 import Button from '../components/ui/Button';
-
-// Datos de ejemplo
-const mockAnnouncements = [
-    { id: 1, title: "Ducimus quos quae adipisci dolor quos.", type: "Urgente", content: "Qui corrupti deleniti voluptatem quibusdam et dolo...", author: "admin", date: "06/03/2025 00:12" },
-    { id: 2, title: "Aut illum consectetur adipisci odio id.", type: "Urgente", content: "Asperiores quia incidunt ut voluptatem fugiat tota...", author: "admin", date: "18/05/2025 06:23" },
-    { id: 3, title: "Et voluptates dolores sed molestias.", type: "Informativo", content: "Rerum pariatur totam ad pariatur. Dolor modi praes...", author: "admin", date: "18/07/2025 20:32" },
-];
 
 const AnnouncementsPage = () => {
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
+
+    // Estados para controlar la visibilidad de los modales
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    useEffect(() => {
-        // --- ESPACIO PARA API (GET) ---
-        setTimeout(() => {
-            setAnnouncements(mockAnnouncements);
+    // --- FUNCIÓN PARA OBTENER DATOS (GET) ---
+    const fetchAnnouncements = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get('/api/announcements'); // <-- URL de tu API para comunicados
+
+            // **Programación Defensiva**: Verificamos si la respuesta es un array
+            if (Array.isArray(response.data)) {
+                setAnnouncements(response.data);
+            } else {
+                console.warn("La respuesta de la API para comunicados no es un array. Se usará un array vacío.");
+                setAnnouncements([]);
+            }
+        } catch (error) {
+            console.error("Error al obtener los comunicados:", error);
+            setAnnouncements([]); // Evita que la app se rompa si la API falla
+        } finally {
             setLoading(false);
-        }, 500);
+        }
+    };
+
+    // useEffect se ejecuta una vez para cargar los datos iniciales
+    useEffect(() => {
+        fetchAnnouncements();
     }, []);
+
+    // --- MANEJADORES DE ACCIONES ---
 
     const handleNew = () => {
         setCurrentAnnouncement(null);
@@ -43,21 +59,32 @@ const AnnouncementsPage = () => {
         setIsDeleteModalOpen(true);
     };
 
-    const handleSave = (formData) => {
-        if (currentAnnouncement) {
-            // --- ESPACIO PARA API (UPDATE/PUT) ---
-            console.log("Actualizando comunicado:", formData);
-        } else {
-            // --- ESPACIO PARA API (CREATE/POST) ---
-            console.log("Creando nuevo comunicado:", formData);
+    // --- LÓGICA CRUD (CREATE/POST y UPDATE/PUT) ---
+    const handleSave = async (formData) => {
+        try {
+            if (currentAnnouncement) {
+                // UPDATE (PUT)
+                await axios.put(`/api/announcements/${currentAnnouncement.id}`, formData);
+            } else {
+                // CREATE (POST)
+                await axios.post('/api/announcements', formData);
+            }
+            setIsFormModalOpen(false);
+            fetchAnnouncements(); // Recarga los datos para ver los cambios inmediatamente
+        } catch (error) {
+            console.error("Error al guardar el comunicado:", error);
         }
-        setIsFormModalOpen(false);
     };
 
-    const confirmDelete = () => {
-        // --- ESPACIO PARA API (DELETE) ---
-        console.log("Eliminando comunicado:", currentAnnouncement.id);
-        setIsDeleteModalOpen(false);
+    // --- LÓGICA CRUD (DELETE) ---
+    const confirmDelete = async () => {
+        try {
+            await axios.delete(`/api/announcements/${currentAnnouncement.id}`);
+            setIsDeleteModalOpen(false);
+            fetchAnnouncements(); // Recarga los datos para que el comunicado eliminado desaparezca
+        } catch (error) {
+            console.error("Error al eliminar el comunicado:", error);
+        }
     };
 
     return (
@@ -67,7 +94,15 @@ const AnnouncementsPage = () => {
                 <Button onClick={handleNew}>Nuevo Comunicado</Button>
             </div>
 
-            {loading ? <p>Cargando...</p> : <AnnouncementsTable announcements={announcements} onEdit={handleEdit} onDelete={handleDelete} />}
+            {loading ? (
+                <p>Cargando comunicados...</p>
+            ) : (
+                <AnnouncementsTable 
+                    announcements={announcements} 
+                    onEdit={handleEdit} 
+                    onDelete={handleDelete} 
+                />
+            )}
 
             {isFormModalOpen && (
                 <AnnouncementFormModal
@@ -79,7 +114,7 @@ const AnnouncementsPage = () => {
 
             {isDeleteModalOpen && (
                 <ConfirmDeleteModal
-                    unitName={currentAnnouncement?.title} // Le pasamos el título del comunicado
+                    unitName={`el comunicado "${currentAnnouncement?.title}"`}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={confirmDelete}
                 />
