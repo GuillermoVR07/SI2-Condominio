@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import ModuleCard from '../components/dashboard/ModuleCard';
 import axios from 'axios';
+import { Link } from 'react-router-dom'; 
 
 // Importa los íconos que vas a usar
 import { FaUsers, FaCog, FaDollarSign, FaComments, FaShieldAlt, FaChartBar, FaBook } from 'react-icons/fa';
 
 // Datos de ejemplo (esto vendrá del backend)
 const mockModules = [
-  { id: 1, title: 'Usuarios', icon: <FaUsers />, color: 'blue' },
-  { id: 2, title: 'Administración Interna', icon: <FaCog />, color: 'gray' },
+  { id: 1, title: 'Usuarios', icon: <FaUsers />, color: 'blue', path: '/residents' },
+  { id: 2, title: 'Administración Interna', icon: <FaCog />, color: 'gray', path: '/units' },
   { id: 3, title: 'Finanzas y Áreas Comunes', icon: <FaDollarSign />, color: 'green' },
-  { id: 4, title: 'Comunicación y Atención al Residente', icon: <FaComments />, color: 'cyan' },
+  { id: 4, title: 'Comunicación y Atención al Residente', icon: <FaComments />, color: 'cyan', path: '/communications' },
   { id: 5, title: 'Seguridad y Accesos', icon: <FaShieldAlt />, color: 'yellow' },
   { id: 6, title: 'Comunidad y Reportes', icon: <FaChartBar />, color: 'black' },
   { id: 7, title: 'Bitácora', icon: <FaBook />, color: 'red' },
@@ -60,6 +61,7 @@ const DashboardPage = () => {
               title={module.title}
               icon={module.icon}
               color={module.color}
+              path={module.path}
             />
           ))}
         </div>

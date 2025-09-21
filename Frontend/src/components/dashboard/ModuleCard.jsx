@@ -1,9 +1,8 @@
 import React from 'react';
 import { FaArrowRight } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
-// Este componente recibe props (title, icon, color) para ser dinámico y reutilizable
-const ModuleCard = ({ title, icon, color }) => {
-  // Este objeto nos ayuda a convertir un nombre de color en una clase de Tailwind CSS
+const ModuleCard = ({ title, icon, color, path }) => {
   const colorVariants = {
     blue: 'bg-blue-500',
     gray: 'bg-gray-500',
@@ -14,8 +13,10 @@ const ModuleCard = ({ title, icon, color }) => {
     red: 'bg-red-600',
   };
 
+  const destination = path || '#';
+
   return (
-    // Usamos la clase de color que corresponda según la prop 'color'
+  <Link to={destination}>
     <div
       className={`
         ${colorVariants[color] || 'bg-gray-500'} 
@@ -40,6 +41,7 @@ const ModuleCard = ({ title, icon, color }) => {
         <FaArrowRight />
       </div>
     </div>
+  </Link>
   );
 };
 

@@ -3,17 +3,18 @@ import { Link } from 'react-router-dom';
 import { FaHome, FaUsers, FaCog, FaBuilding, FaBullhorn, FaShieldAlt, FaChartBar, FaBook } from 'react-icons/fa';
 
 const Sidebar = () => {
+  // AÑADE UN 'id' ÚNICO A CADA OBJETO
   const menuItems = [
-    { name: 'Inicio', icon: <FaHome /> },
-    { name: 'Usuarios', icon: <FaUsers />, path: '/residents' },
-    { name: 'Administración Interna', icon: <FaCog /> },
-    { name: 'Finanzas y Áreas Comunes', icon: <FaBuilding /> },
-    { name: 'Comunicación y Atención al Residente', icon: <FaBullhorn /> },
-    { name: 'Seguridad y Accesos', icon: <FaShieldAlt /> },
-    { name: 'Comunidad y Reportes', icon: <FaChartBar /> },
-    { name: 'Bitácora', icon: <FaBook /> },
-
-    { name: 'Administración Interna', icon: <FaCog />, path: '#' },
+    { id: 1, name: 'Inicio', icon: <FaHome />, path: '/' },
+    { id: 2, name: 'Usuarios', icon: <FaUsers />, path: '/residents' },
+    { id: 3, name: 'Administración Interna', icon: <FaCog />, path: '/units' },
+    { id: 4, name: 'Finanzas y Áreas Comunes', icon: <FaBuilding />, path: '#' },
+    { id: 5, name: 'Comunicación y Atención al Residente', icon: <FaBullhorn />, path: '/communications' },
+    { id: 6, name: 'Seguridad y Accesos', icon: <FaShieldAlt />, path: '#' },
+    { id: 7, name: 'Comunidad y Reportes', icon: <FaChartBar />, path: '#' },
+    { id: 8, name: 'Bitácora', icon: <FaBook />, path: '#' },
+    // Si tuvieras otro con el mismo nombre, el id lo haría único
+    // { id: 9, name: 'Administración Interna', icon: <FaCog />, path: '/admin2' },
   ];
 
   return (
@@ -23,9 +24,9 @@ const Sidebar = () => {
       </div>
       <nav className="flex-1 px-4 py-6 space-y-2">
         {menuItems.map((item) => (
-          // Cambia la etiqueta <a> por <Link>
+          // USA 'item.id' COMO KEY
           <Link
-            key={item.name}
+            key={item.id} 
             to={item.path}
             className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
           >
@@ -37,6 +38,5 @@ const Sidebar = () => {
     </aside>
   );
 };
-
 
 export default Sidebar;
