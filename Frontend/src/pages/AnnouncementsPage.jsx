@@ -4,49 +4,57 @@ import axios from 'axios';
 // Componentes
 import AnnouncementsTable from '../components/announcements/AnnouncementsTable';
 import AnnouncementFormModal from '../components/announcements/AnnouncementFormModal';
-import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal'; // Reutilizamos este modal
+import ViewAnnouncementModal from '../components/announcements/ViewAnnouncementModal';
+import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal';
 import Button from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
 
 const AnnouncementsPage = () => {
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
-
-    // Estados para controlar la visibilidad de los modales
+    
+    // Estados para controlar la visibilidad de cada modal
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    
+    const { user } = useAuth();
 
     // --- FUNCIÓN PARA OBTENER DATOS (GET) ---
     const fetchAnnouncements = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('/api/announcements'); // <-- URL de tu API para comunicados
+            const response = await axios.get('/api/comunicados/');
 
-            // **Programación Defensiva**: Verificamos si la respuesta es un array
             if (Array.isArray(response.data)) {
                 setAnnouncements(response.data);
             } else {
-                console.warn("La respuesta de la API para comunicados no es un array. Se usará un array vacío.");
+                console.warn("La respuesta de /api/comunicados/ no es un array. Se usará un array vacío.");
                 setAnnouncements([]);
             }
         } catch (error) {
             console.error("Error al obtener los comunicados:", error);
-            setAnnouncements([]); // Evita que la app se rompa si la API falla
+            setAnnouncements([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // useEffect se ejecuta una vez para cargar los datos iniciales
+    // Carga inicial de datos
     useEffect(() => {
         fetchAnnouncements();
     }, []);
 
     // --- MANEJADORES DE ACCIONES ---
-
     const handleNew = () => {
         setCurrentAnnouncement(null);
         setIsFormModalOpen(true);
+    };
+
+    const handleView = (announcement) => {
+        setCurrentAnnouncement(announcement);
+        setIsViewModalOpen(true);
     };
 
     const handleEdit = (announcement) => {
@@ -62,26 +70,30 @@ const AnnouncementsPage = () => {
     // --- LÓGICA CRUD (CREATE/POST y UPDATE/PUT) ---
     const handleSave = async (formData) => {
         try {
+            // Usamos el ID del usuario logueado (simulado o real)
+            const dataToSend = { ...formData, usuario: user.id }; 
+
             if (currentAnnouncement) {
-                // UPDATE (PUT)
-                await axios.put(`/api/announcements/${currentAnnouncement.id}`, formData);
+                await axios.put(`/api/comunicados/${currentAnnouncement.id}/`, dataToSend);
             } else {
-                // CREATE (POST)
-                await axios.post('/api/announcements', formData);
+                await axios.post('/api/comunicados/', dataToSend);
             }
             setIsFormModalOpen(false);
-            fetchAnnouncements(); // Recarga los datos para ver los cambios inmediatamente
+            fetchAnnouncements();
         } catch (error) {
             console.error("Error al guardar el comunicado:", error);
+            if (error.response) {
+                console.error("Detalle del error del backend:", error.response.data);
+            }
         }
     };
 
     // --- LÓGICA CRUD (DELETE) ---
     const confirmDelete = async () => {
         try {
-            await axios.delete(`/api/announcements/${currentAnnouncement.id}`);
+            await axios.delete(`/api/comunicados/${currentAnnouncement.id}/`);
             setIsDeleteModalOpen(false);
-            fetchAnnouncements(); // Recarga los datos para que el comunicado eliminado desaparezca
+            fetchAnnouncements();
         } catch (error) {
             console.error("Error al eliminar el comunicado:", error);
         }
@@ -99,8 +111,18 @@ const AnnouncementsPage = () => {
             ) : (
                 <AnnouncementsTable 
                     announcements={announcements} 
+                    onView={handleView}
                     onEdit={handleEdit} 
                     onDelete={handleDelete} 
+                />
+            )}
+
+            {/* --- Modales --- */}
+
+            {isViewModalOpen && (
+                <ViewAnnouncementModal
+                    announcement={currentAnnouncement}
+                    onClose={() => setIsViewModalOpen(false)}
                 />
             )}
 
@@ -114,7 +136,7 @@ const AnnouncementsPage = () => {
 
             {isDeleteModalOpen && (
                 <ConfirmDeleteModal
-                    unitName={`el comunicado "${currentAnnouncement?.title}"`}
+                    unitName={`el comunicado "${currentAnnouncement?.titulo}"`}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={confirmDelete}
                 />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 
 // Componentes
@@ -19,13 +19,13 @@ const ResidentsPage = () => {
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    // --- FUNCIÓN PARA OBTENER DATOS (GET) CON BÚSQUEDA ---
-    const fetchResidents = async (query = '') => {
+    // --- FUNCIÓN PARA OBTENER TODOS LOS DATOS (GET) ---
+    const fetchResidents = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`/api/residents?search=${query}`); // <-- URL dinámica para la búsqueda
+            // Se obtienen todos los residentes sin filtro
+            const response = await axios.get(`/api/residentes/`); 
 
-            // **Programación Defensiva**
             if (Array.isArray(response.data)) {
                 setResidents(response.data);
             } else {
@@ -34,20 +34,29 @@ const ResidentsPage = () => {
             }
         } catch (error) {
             console.error("Error al obtener los residentes:", error);
-            setResidents([]); // Evita que la app se rompa en caso de error
+            setResidents([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // --- useEffect CON "DEBOUNCER" PARA LA BÚSQUEDA ---
+    // Carga inicial de datos
     useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchResidents(searchTerm);
-        }, 500); // Espera 500ms después de que el usuario deja de escribir para buscar
+        fetchResidents();
+    }, []);
 
-        return () => clearTimeout(timer); // Limpia el temporizador
-    }, [searchTerm]); // Se ejecuta cada vez que 'searchTerm' cambia
+    // --- LÓGICA DE FILTRADO EN EL CLIENTE ---
+    const filteredResidents = useMemo(() => {
+        if (!searchTerm) {
+            return residents; // Si no hay búsqueda, devuelve todos los residentes
+        }
+        const term = searchTerm.toLowerCase();
+        return residents.filter(resident => 
+            resident.nombre_completo?.toLowerCase().includes(term) ||
+            resident.ci?.toLowerCase().includes(term) ||
+            resident.email?.toLowerCase().includes(term)
+        );
+    }, [residents, searchTerm]); // Se recalcula cuando cambian los residentes o el término de búsqueda
 
     // --- MANEJADORES DE ACCIONES ---
 
@@ -68,27 +77,32 @@ const ResidentsPage = () => {
 
     // --- LÓGICA CRUD (CREATE/POST, UPDATE/PUT) ---
     const handleSave = async (residentData) => {
+        const payload = {
+            nombre: residentData.nombre,
+            apellido: residentData.apellido,
+            ci: residentData.ci,
+            email: residentData.email,
+            tipo_residente: residentData.tipo_residente,
+        };
+
         try {
             if (currentResident) {
-                // UPDATE (PUT)
-                await axios.put(`/api/residents/${currentResident.id}`, residentData);
+                await axios.put(`/api/residentes/${currentResident.id}/`, payload);
             } else {
-                // CREATE (POST)
-                await axios.post('/api/residents', residentData);
+                await axios.post('/api/residentes/', payload);
             }
             setIsFormModalOpen(false);
-            fetchResidents(searchTerm); // Recarga los datos manteniendo el filtro de búsqueda
+            fetchResidents(); // Recarga todos los datos para tener la lista actualizada
         } catch (error) {
             console.error("Error al guardar el residente:", error);
         }
     };
 
-    // --- LÓGICA CRUD (DELETE) ---
     const confirmDelete = async () => {
         try {
-            await axios.delete(`/api/residents/${currentResident.id}`);
+            await axios.delete(`/api/residentes/${currentResident.id}/`);
             setIsDeleteModalOpen(false);
-            fetchResidents(searchTerm); // Recarga los datos manteniendo el filtro
+            fetchResidents(); // Recarga todos los datos
         } catch (error) {
             console.error("Error al eliminar el residente:", error);
         }
@@ -100,7 +114,10 @@ const ResidentsPage = () => {
             
             <div className="flex justify-between items-center mb-6">
                 <div className="w-1/3">
-                    <SearchBar onSearch={setSearchTerm} />
+                    <SearchBar 
+                        onSearch={setSearchTerm} 
+                        placeholder="Buscar por nombre, CI o email..."
+                    />
                 </div>
                 <Button onClick={handleNew}>Nuevo Residente</Button>
             </div>
@@ -109,7 +126,7 @@ const ResidentsPage = () => {
                 <p>Cargando residentes...</p>
             ) : (
                 <ResidentTable 
-                    residents={residents}
+                    residents={filteredResidents} // Se pasa la lista filtrada a la tabla
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                 />
@@ -118,7 +135,7 @@ const ResidentsPage = () => {
             <div className="mt-6 flex justify-center">
                 <Pagination 
                     currentPage={1}
-                    totalPages={5} // Esto debería venir de la API en un futuro
+                    totalPages={2} 
                     onPageChange={(page) => console.log(`Cambiando a la página ${page}`)}
                 />
             </div>
@@ -134,7 +151,7 @@ const ResidentsPage = () => {
 
             {isDeleteModalOpen && (
                 <ConfirmDeleteModal
-                    unitName={currentResident?.name}
+                    unitName={currentResident?.nombre_completo} // Usamos nombre_completo
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={confirmDelete}
                 />

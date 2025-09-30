@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 const ResidentFormModal = ({ resident, onClose, onSave }) => {
     // Inicializa el estado del formulario con los datos del residente si se está editando, o vacío si es nuevo.
     const [formData, setFormData] = useState({
-        name: '',
+        nombre: '',
+        apellido: '',
         ci: '',
         email: '',
-        type: 'Propietario'
+        tipo_residente: 'Propietario'
     });
 
     // useEffect se usa para llenar el formulario cuando se abre para editar.
@@ -31,9 +32,15 @@ const ResidentFormModal = ({ resident, onClose, onSave }) => {
             <div className="bg-white p-8 rounded-lg shadow-xl w-1/2">
                 <h2 className="text-2xl font-bold mb-6">{resident ? 'Editar Residente' : 'Nuevo Residente'}</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Nombre completo</label>
-                        <input name="name" value={formData.name} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md" required />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                            <input name="nombre" value={formData.nombre} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md" required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Apellido</label>
+                            <input name="apellido" value={formData.apellido} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md" required />
+                        </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -42,7 +49,7 @@ const ResidentFormModal = ({ resident, onClose, onSave }) => {
                         </div>
                         <div>
                            <label className="block text-sm font-medium text-gray-700">Tipo de Residente</label>
-                            <select name="type" value={formData.type} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md">
+                            <select name="tipo_residente" value={formData.tipo_residente} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md">
                                 <option value="Propietario">Propietario</option>
                                 <option value="Inquilino">Inquilino</option>
                                 <option value="Otro">Otro</option>

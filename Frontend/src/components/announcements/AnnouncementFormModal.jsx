@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const AnnouncementFormModal = ({ announcement, onClose, onSave }) => {
-    const [formData, setFormData] = useState(
-        announcement || { title: '', type: 'Informativo', content: '' }
-    );
+    const [formData, setFormData] = useState({
+        titulo: '',
+        contenido: '',
+        tipo: 'Informativo', // Valor por defecto
+    });
+
+    // Este efecto llena el formulario con los datos existentes si se está editando
+    useEffect(() => {
+        if (announcement) {
+            setFormData({
+                titulo: announcement.titulo,
+                contenido: announcement.contenido,
+                tipo: announcement.tipo,
+            });
+        }
+    }, [announcement]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -22,18 +35,20 @@ const AnnouncementFormModal = ({ announcement, onClose, onSave }) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Título</label>
-                        <input name="title" value={formData.title} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md" required />
+                        <input name="titulo" value={formData.titulo} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md" required />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Tipo</label>
-                        <select name="type" value={formData.type} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md">
+                        <select name="tipo" value={formData.tipo} onChange={handleChange} className="mt-1 p-2 w-full border rounded-md">
+                            {/* Los tipos están definidos aquí para coincidir con tu CharField del backend */}
                             <option value="Informativo">Informativo</option>
                             <option value="Urgente">Urgente</option>
+                            {/* Si quieres añadir más tipos, simplemente agrégalos aquí y asegúrate de que tu backend los acepte */}
                         </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Contenido</label>
-                        <textarea name="content" value={formData.content} onChange={handleChange} rows="5" className="mt-1 p-2 w-full border rounded-md" required />
+                        <textarea name="contenido" value={formData.contenido} onChange={handleChange} rows="5" className="mt-1 p-2 w-full border rounded-md" required />
                     </div>
                     <div className="mt-6 flex justify-end space-x-4">
                         <button type="button" onClick={onClose} className="bg-gray-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-600">Cancelar</button>

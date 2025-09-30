@@ -18,10 +18,10 @@ const ResidentTable = ({ residents, onEdit, onDelete }) => {
                     {residents.map((resident, index) => (
                         <tr key={resident.id} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
                             <td className="text-left py-3 px-4">{resident.id}</td>
-                            <td className="text-left py-3 px-4">{resident.name}</td>
+                            <td className="text-left py-3 px-4">{resident.nombre_completo}</td>
                             <td className="text-left py-3 px-4">{resident.ci}</td>
                             <td className="text-left py-3 px-4">{resident.email}</td>
-                            <td className="text-left py-3 px-4">{resident.type}</td>
+                            <td className="text-left py-3 px-4">{resident.tipo_residente}</td>
                             <td className="text-left py-3 px-4">
                                 <button 
                                     onClick={() => onEdit(resident)}

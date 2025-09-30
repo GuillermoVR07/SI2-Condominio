@@ -1,119 +1,192 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 
 // Componentes
 import FinesTable from '../components/fines/FinesTable';
 import FineFormModal from '../components/fines/FineFormModal';
+import FineViewModal from '../components/fines/FineViewModal';
 import ConfirmDeleteModal from '../components/units/ConfirmDeleteModal';
+import SearchBar from '../components/ui/SearchBar';
 import Button from '../components/ui/Button';
+import Pagination from '../components/ui/Pagination';
 
 const FinesPage = () => {
+    // Estados de datos
     const [fines, setFines] = useState([]);
-    const [loading, setLoading] = useState(true); // Estado para manejar la carga
+    const [residents, setResidents] = useState([]);
+    const [employees, setEmployees] = useState([]);
+    const [cuotas, setCuotas] = useState([]);
+    
+    // Estados de UI
+    const [loading, setLoading] = useState(true);
     const [currentFine, setCurrentFine] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortConfig, setSortConfig] = useState({ key: 'fecha_emision', direction: 'descending' });
+
+    // Estados de modales
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    // Función centralizada para obtener los datos de la API
-    const fetchFines = async () => {
+    // --- OBTENCIÓN DE DATOS ---
+    const fetchData = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            const response = await axios.get('/api/fines');
-
-            // Comprueba si la respuesta de la API es realmente un array.
-            if (Array.isArray(response.data)) {
-                setFines(response.data); // Si es un array, guárdalo.
-            } else {
-                console.warn("La respuesta de la API no es un array. Se usará un array vacío.");
-                setFines([]); // Si no, guarda un array vacío para evitar el error.
-            }
-
+            const [finesRes, residentsRes, employeesRes, cuotasRes] = await Promise.all([
+                axios.get('/api/multas/'),
+                axios.get('/api/residentes/'),
+                axios.get('/api/empleados/'),
+                axios.get('/api/cuotas/')
+            ]);
+            setFines(Array.isArray(finesRes.data) ? finesRes.data : []);
+            setResidents(Array.isArray(residentsRes.data) ? residentsRes.data : []);
+            setEmployees(Array.isArray(employeesRes.data) ? employeesRes.data : []);
+            setCuotas(Array.isArray(cuotasRes.data) ? cuotasRes.data : []);
         } catch (error) {
-            console.error("Error al obtener las multas:", error);
-            setFines([]); // Si hay un error de red, también usa un array vacío.
+            console.error("Error al obtener los datos:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    // useEffect se ejecuta solo una vez cuando el componente se monta
     useEffect(() => {
-        fetchFines();
+        fetchData();
     }, []);
 
+    // --- LÓGICA DE BÚSQUEDA Y ORDENAMIENTO (CLIENT-SIDE) ---
+    const filteredFines = useMemo(() => {
+        if (!searchTerm) return fines;
+        const term = searchTerm.toLowerCase();
+        return fines.filter(fine =>
+            fine.motivo?.toLowerCase().includes(term) ||
+            fine.residente_nombre?.toLowerCase().includes(term) ||
+            fine.empleado_nombre?.toLowerCase().includes(term) ||
+            fine.estado?.toLowerCase().includes(term)
+        );
+    }, [fines, searchTerm]);
+
+    const sortedFines = useMemo(() => {
+        let sortableItems = [...filteredFines];
+        if (sortConfig.key !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+                if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [filteredFines, sortConfig]);
+
+    const requestSort = (key) => {
+        let direction = 'ascending';
+        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    // --- MANEJADORES DE ACCIONES CRUD ---
     const handleNew = () => {
         setCurrentFine(null);
         setIsFormModalOpen(true);
     };
-
+    const handleView = (fine) => {
+        setCurrentFine(fine);
+        setIsViewModalOpen(true);
+    };
     const handleEdit = (fine) => {
         setCurrentFine(fine);
         setIsFormModalOpen(true);
     };
-
     const handleDelete = (fine) => {
         setCurrentFine(fine);
         setIsDeleteModalOpen(true);
     };
 
     const handleSave = async (formData) => {
+        // Limpiar datos opcionales si están vacíos
+        const payload = { ...formData };
+        if (!payload.empleado) delete payload.empleado;
+        if (!payload.cuota) delete payload.cuota;
+
         try {
             if (currentFine) {
-                // 2. LLAMADA PUT PARA ACTUALIZAR UNA MULTA EXISTENTE
-                await axios.put(`/api/fines/${currentFine.id}`, formData);
+                await axios.put(`/api/multas/${currentFine.id}/`, payload);
             } else {
-                // 3. LLAMADA POST PARA CREAR UNA NUEVA MULTA
-                await axios.post('/api/fines', formData);
+                await axios.post('/api/multas/', payload);
             }
             setIsFormModalOpen(false);
-            fetchFines(); // Vuelve a cargar los datos para ver los cambios
+            fetchData(); // Recargar todos los datos
         } catch (error) {
-            console.error("Error al guardar la multa:", error);
+            console.error("Error al guardar la multa:", error.response?.data || error.message);
         }
     };
 
     const confirmDelete = async () => {
         try {
-            // 4. LLAMADA DELETE PARA ELIMINAR UNA MULTA
-            await axios.delete(`/api/fines/${currentFine.id}`);
+            await axios.delete(`/api/multas/${currentFine.id}/`);
             setIsDeleteModalOpen(false);
-            fetchFines(); // Vuelve a cargar los datos para ver los cambios
+            fetchData(); // Recargar
         } catch (error) {
             console.error("Error al eliminar la multa:", error);
         }
     };
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-800">Panel de Multas</h1>
-                <p className="text-sm text-gray-500">Inicio / Multas</p>
-            </div>
+        <div className="bg-white p-8 rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Gestión de Multas</h1>
             
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-700">Tabla Multas</h2>
-                    <Button onClick={handleNew}>Nueva Multa</Button>
+            <div className="flex justify-between items-center mb-6">
+                <div className="w-1/3">
+                    <SearchBar 
+                        onSearch={setSearchTerm}
+                        placeholder="Buscar por motivo, residente, estado..."
+                    />
                 </div>
+                <Button onClick={handleNew}>Nueva Multa</Button>
+            </div>
 
-                {loading ? (
-                    <p>Cargando multas...</p>
-                ) : (
-                    <FinesTable fines={fines} onEdit={handleEdit} onDelete={handleDelete} />
-                )}
+            {loading ? (
+                <p>Cargando datos...</p>
+            ) : (
+                <FinesTable 
+                    fines={sortedFines}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    requestSort={requestSort}
+                    sortConfig={sortConfig}
+                />
+            )}
+            
+            <div className="mt-6 flex justify-center">
+                <Pagination currentPage={1} totalPages={1} onPageChange={() => {}} />
             </div>
 
             {isFormModalOpen && (
                 <FineFormModal
                     fine={currentFine}
+                    residents={residents}
+                    employees={employees}
+                    cuotas={cuotas}
                     onClose={() => setIsFormModalOpen(false)}
                     onSave={handleSave}
                 />
             )}
 
+            {isViewModalOpen && (
+                <FineViewModal
+                    fine={currentFine}
+                    onClose={() => setIsViewModalOpen(false)}
+                />
+            )}
+
             {isDeleteModalOpen && (
                 <ConfirmDeleteModal
-                    unitName={`la multa de ${currentFine?.user} por ${currentFine?.reason}`}
+                    title="Confirmar Eliminación"
+                    message={`¿Estás seguro de que deseas eliminar la multa por "${currentFine?.motivo}"? Esta acción no se puede deshacer.`}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={confirmDelete}
                 />

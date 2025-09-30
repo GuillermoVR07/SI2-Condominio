@@ -11,6 +11,7 @@ const ModuleCard = ({ title, icon, color, path }) => {
     yellow: 'bg-yellow-500',
     black: 'bg-slate-800',
     red: 'bg-red-600',
+    teal: 'bg-teal-500',
   };
 
   const destination = path || '#';

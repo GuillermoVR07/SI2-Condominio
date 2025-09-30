@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onSearch, placeholder = "Buscar..." }) => {
     const [query, setQuery] = useState('');
 
     const handleSearch = () => {
@@ -15,18 +15,18 @@ const SearchBar = ({ onSearch }) => {
     };
 
     return (
-        <div className="relative">
+        <div className="relative w-full">
             <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Buscar por nombre, apellido o CI"
-                className="w-full pl-4 pr-20 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={placeholder}
+                className="w-full pl-4 pr-24 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
                 onClick={handleSearch}
-                className="absolute right-1 top-1/2 -translate-y-1/2 bg-white border border-gray-300 text-gray-600 px-4 py-1 rounded-md hover:bg-gray-100"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-50 border border-gray-300 text-gray-600 px-4 py-1 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
                 Buscar
             </button>
