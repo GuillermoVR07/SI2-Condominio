@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-
+import { useLogbook } from '../context/LogbookContext';
 // Componentes
 import FinesTable from '../components/fines/FinesTable';
 import FineFormModal from '../components/fines/FineFormModal';
@@ -11,6 +11,7 @@ import Button from '../components/ui/Button';
 import Pagination from '../components/ui/Pagination';
 
 const FinesPage = () => {
+    const { addLogEntry } = useLogbook();
     // Estados de datos
     const [fines, setFines] = useState([]);
     const [residents, setResidents] = useState([]);
@@ -114,8 +115,10 @@ const FinesPage = () => {
         try {
             if (currentFine) {
                 await axios.put(`/api/multas/${currentFine.id}/`, payload);
+                addLogEntry('Editó Multa', `ID: ${currentFine.id}, Motivo: ${formData.reason}, Monto: ${formData.amount}`);
             } else {
                 await axios.post('/api/multas/', payload);
+                addLogEntry('Creó Nueva Multa', `Usuario: ${formData.user}, Motivo: ${formData.reason}, Monto: ${formData.amount}`);
             }
             setIsFormModalOpen(false);
             fetchData(); // Recargar todos los datos
@@ -127,6 +130,7 @@ const FinesPage = () => {
     const confirmDelete = async () => {
         try {
             await axios.delete(`/api/multas/${currentFine.id}/`);
+            addLogEntry('Eliminó Multa', `ID: ${currentFine.id}, Motivo: ${currentFine.reason}`);
             setIsDeleteModalOpen(false);
             fetchData(); // Recargar
         } catch (error) {

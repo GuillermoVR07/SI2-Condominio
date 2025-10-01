@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import { useLogbook } from '../context/LogbookContext';
 // Componentes
 import AnnouncementsTable from '../components/announcements/AnnouncementsTable';
 import AnnouncementFormModal from '../components/announcements/AnnouncementFormModal';
@@ -10,6 +10,7 @@ import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
 const AnnouncementsPage = () => {
+    const { addLogEntry } = useLogbook();
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
@@ -75,8 +76,10 @@ const AnnouncementsPage = () => {
 
             if (currentAnnouncement) {
                 await axios.put(`/api/comunicados/${currentAnnouncement.id}/`, dataToSend);
+                addLogEntry('Editó Comunicado', `ID: ${currentAnnouncement.id}, Título: ${formData.titulo}`);
             } else {
                 await axios.post('/api/comunicados/', dataToSend);
+                addLogEntry('Creó Nuevo Comunicado', `Título: ${formData.titulo}`);
             }
             setIsFormModalOpen(false);
             fetchAnnouncements();
@@ -92,6 +95,7 @@ const AnnouncementsPage = () => {
     const confirmDelete = async () => {
         try {
             await axios.delete(`/api/comunicados/${currentAnnouncement.id}/`);
+            addLogEntry('Eliminó Comunicado', `ID: ${currentAnnouncement.id}, Título: ${currentAnnouncement.titulo}`);
             setIsDeleteModalOpen(false);
             fetchAnnouncements();
         } catch (error) {

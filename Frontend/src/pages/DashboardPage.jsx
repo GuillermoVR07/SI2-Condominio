@@ -2,12 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import ModuleCard from '../components/dashboard/ModuleCard';
 
-// Importamos los íconos que vamos a usar, incluyendo los nuevos
+// Importamos los íconos 
 import { 
     FaUsers, 
     FaCog, 
-    FaDollarSign, // Para Finanzas
-    FaTree,       // Para Áreas Comunes
+    FaDollarSign, 
+    FaTree,       
     FaComments, 
     FaShieldAlt, 
     FaChartBar, 
@@ -15,7 +15,7 @@ import {
 } from 'react-icons/fa';
 
 const DashboardPage = () => {
-    // --- mockModules MODIFICADO ---
+    // --- Modulos ---
     const mockModules = [
         { id: 1, title: 'Usuarios', icon: <FaUsers />, color: 'blue', path: '/users' },
         { id: 2, title: 'Administración Interna', icon: <FaCog />, color: 'gray', path: '/internal-admin' },
@@ -23,8 +23,8 @@ const DashboardPage = () => {
         { id: 8, title: 'Áreas Comunes', icon: <FaTree />, color: 'teal', path: '/areas-comunes' },
         { id: 4, title: 'Comunicación y Atención al Residente', icon: <FaComments />, color: 'cyan', path: '/communications' },
         { id: 5, title: 'Seguridad y Accesos', icon: <FaShieldAlt />, color: 'yellow', path: '/security' },
-        { id: 6, title: 'Comunidad y Reportes', icon: <FaChartBar />, color: 'black', path: '/community' },
-        { id: 7, title: 'Bitácora', icon: <FaBook />, color: 'red', path: '/log' },
+        { id: 6, title: 'Comunidad y Reportes', icon: <FaChartBar />, color: 'black', path: '/comunidad-y-reportes' },
+        { id: 7, title: 'Bitácora', icon: <FaBook />, color: 'red', path: '/bitacora' },
     ];
 
     return (

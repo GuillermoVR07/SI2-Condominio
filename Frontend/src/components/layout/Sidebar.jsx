@@ -3,10 +3,9 @@ import { Link } from 'react-router-dom';
 import { 
     FaHome, 
     FaUsers, 
-    FaUserPlus, 
     FaCog, 
-    FaDollarSign, // Para Finanzas
-    FaTree,       // Para Áreas Comunes
+    FaDollarSign, 
+    FaTree, 
     FaComments, 
     FaShieldAlt, 
     FaChartBar, 
@@ -17,14 +16,13 @@ const Sidebar = () => {
   const menuItems = [
     { id: 1, name: 'Inicio', icon: <FaHome />, path: '/' },
     { id: 2, name: 'Usuarios', icon: <FaUsers />, path: '/users' },
-    { id: 9, name: 'Crear Usuario', icon: <FaUserPlus />, path: '/users/create' },
     { id: 3, name: 'Administración Interna', icon: <FaCog />, path: '/internal-admin' },
     { id: 4, name: 'Finanzas', icon: <FaDollarSign />, path: '/finanzas/pagos' },
-    { id: 10, name: 'Áreas Comunes', icon: <FaTree />, path: '/areas-comunes' },
+    { id: 10, name: 'Áreas Comunes', icon: <FaTree />, path: '/areas-comunes' }, 
     { id: 5, name: 'Comunicación y Atención al Residente', icon: <FaComments />, path: '/communications' },
-    { id: 6, name: 'Seguridad y Accesos', icon: <FaShieldAlt />, path: '/security' },
-    { id: 7, name: 'Comunidad y Reportes', icon: <FaChartBar />, path: '/community' },
-    { id: 8, name: 'Bitácora', icon: <FaBook />, path: '/log' },
+    { id: 6, name: 'Seguridad y Accesos', icon: <FaShieldAlt />, path: '#' },
+    { id: 7, name: 'Comunidad y Reportes', icon: <FaChartBar />, path: '/comunidad-y-reportes' },
+    { id: 8, name: 'Bitácora', icon: <FaBook />, path: '/bitacora' },
   ];
 
   return (
@@ -49,4 +47,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-

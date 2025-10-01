@@ -6,51 +6,37 @@ const CreateUserPage = () => {
     const [userType, setUserType] = useState('residente');
     const [cargos, setCargos] = useState([]);
     const [formData, setFormData] = useState({
-        // Datos del Usuario
+        // Datos de la Cuenta (fuente de verdad)
         username: '',
         password: '',
         passwordConfirm: '',
         email: '',
         first_name: '',
         last_name: '',
-        // Datos del Residente
-        residente_nombre: '',
-        residente_apellido: '',
+        // Datos específicos
         residente_ci: '',
-        residente_email: '',
         residente_tipo: 'Propietario',
-        // Datos del Empleado
-        empleado_nombre: '',
-        empleado_apellido: '',
+        residente_email_contacto: '',
         empleado_ci: '',
         empleado_telefono: '',
         empleado_direccion: '',
         empleado_cargo: '',
     });
+    const [useDifferentContactEmail, setUseDifferentContactEmail] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Carga los cargos de empleado cuando el componente se monta
+    // Carga los cargos de empleado
     useEffect(() => {
         const fetchCargos = async () => {
             try {
-                // CORRECCIÓN: Usamos la URL correcta de tu API
                 const response = await axios.get('/api/cargos-empleado/');
-                
-                // Programación defensiva para asegurar que la respuesta sea un array
-                if (Array.isArray(response.data)) {
+                if (Array.isArray(response.data) && response.data.length > 0) {
                     setCargos(response.data);
-                    // Establece un valor por defecto para el cargo si hay cargos disponibles
-                    if (response.data.length > 0) {
-                        setFormData(prev => ({ ...prev, empleado_cargo: response.data[0].id }));
-                    }
-                } else {
-                    console.warn("La respuesta de /api/cargos-empleado/ no es un array.");
-                    setCargos([]);
+                    setFormData(prev => ({ ...prev, empleado_cargo: response.data[0].id }));
                 }
             } catch (err) {
                 console.error("Error al obtener los cargos:", err);
-                setCargos([]); // En caso de error, usamos un array vacío para no romper el formulario
             }
         };
         fetchCargos();
@@ -58,7 +44,26 @@ const CreateUserPage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            const newState = { ...prev, [name]: value };
+            if (name === 'first_name') {
+                newState.residente_nombre = value;
+                newState.empleado_nombre = value;
+            } else if (name === 'last_name') {
+                newState.residente_apellido = value;
+                newState.empleado_apellido = value;
+            } else if (name === 'email' && !useDifferentContactEmail) {
+                newState.residente_email_contacto = value;
+            }
+            return newState;
+        });
+    };
+
+    const handleCheckboxChange = (e) => {
+        setUseDifferentContactEmail(e.target.checked);
+        if (!e.target.checked) {
+            setFormData(prev => ({ ...prev, residente_email_contacto: prev.email }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -82,16 +87,16 @@ const CreateUserPage = () => {
 
         if (userType === 'residente') {
             payload.residente = {
-                nombre: formData.residente_nombre,
-                apellido: formData.residente_apellido,
+                nombre: formData.first_name,
+                apellido: formData.last_name,
                 ci: formData.residente_ci,
-                email: formData.residente_email,
+                email: useDifferentContactEmail ? formData.residente_email_contacto : formData.email,
                 tipo_residente: formData.residente_tipo,
             };
         } else if (userType === 'empleado') {
             payload.empleado = {
-                nombre: formData.empleado_nombre,
-                apellido: formData.empleado_apellido,
+                nombre: formData.first_name,
+                apellido: formData.last_name,
                 ci: formData.empleado_ci,
                 telefono: formData.empleado_telefono,
                 direccion: formData.empleado_direccion,
@@ -102,7 +107,17 @@ const CreateUserPage = () => {
         try {
             await axios.post('/api/usuarios/', payload);
             alert('¡Usuario creado con éxito!');
-            navigate('/login');
+            
+            // --- REDIRECCIÓN INTELIGENTE ---
+            // Redirige a la lista correspondiente después de crear el usuario.
+            if (userType === 'residente') {
+                navigate('/residents');
+            } else if (userType === 'empleado') {
+                navigate('/employees');
+            } else {
+                navigate('/users'); // Redirección por defecto si algo falla
+            }
+
         } catch (err) {
             console.error("Error al crear el usuario:", err.response?.data);
             setError(err.response?.data || { detail: "Ocurrió un error inesperado." });
@@ -117,28 +132,22 @@ const CreateUserPage = () => {
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Usuario</label>
                 <div className="flex space-x-4">
-                    <label className="flex items-center">
-                        <input type="radio" name="userType" value="residente" checked={userType === 'residente'} onChange={() => setUserType('residente')} className="form-radio" />
-                        <span className="ml-2">Residente</span>
-                    </label>
-                    <label className="flex items-center">
-                        <input type="radio" name="userType" value="empleado" checked={userType === 'empleado'} onChange={() => setUserType('empleado')} className="form-radio" />
-                        <span className="ml-2">Empleado</span>
-                    </label>
+                    <label className="flex items-center"><input type="radio" name="userType" value="residente" checked={userType === 'residente'} onChange={() => setUserType('residente')} className="form-radio" /><span className="ml-2">Residente</span></label>
+                    <label className="flex items-center"><input type="radio" name="userType" value="empleado" checked={userType === 'empleado'} onChange={() => setUserType('empleado')} className="form-radio" /><span className="ml-2">Empleado</span></label>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* --- SECCIÓN DE DATOS DE USUARIO (COMÚN) --- */}
+                {/* --- SECCIÓN DE DATOS DE USUARIO --- */}
                 <div className="p-4 border rounded-md">
                     <h2 className="text-lg font-semibold mb-4">Datos de la Cuenta</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input name="username" value={formData.username} onChange={handleChange} placeholder="Nombre de usuario" required className="p-2 border rounded" />
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email de la cuenta" required className="p-2 border rounded" />
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email de la cuenta (para login)" required className="p-2 border rounded" />
+                        <input name="first_name" value={formData.first_name} onChange={handleChange} placeholder="Nombres" required className="p-2 border rounded" />
+                        <input name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Apellidos" required className="p-2 border rounded" />
                         <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Contraseña" required className="p-2 border rounded" />
                         <input type="password" name="passwordConfirm" value={formData.passwordConfirm} onChange={handleChange} placeholder="Confirmar contraseña" required className="p-2 border rounded" />
-                        <input name="first_name" value={formData.first_name} onChange={handleChange} placeholder="Nombres" className="p-2 border rounded" />
-                        <input name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Apellidos" className="p-2 border rounded" />
                     </div>
                 </div>
 
@@ -147,15 +156,21 @@ const CreateUserPage = () => {
                     <div className="p-4 border rounded-md">
                         <h2 className="text-lg font-semibold mb-4">Datos del Residente</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input name="residente_nombre" value={formData.residente_nombre} onChange={handleChange} placeholder="Nombre del Residente" required className="p-2 border rounded" />
-                            <input name="residente_apellido" value={formData.residente_apellido} onChange={handleChange} placeholder="Apellido del Residente" required className="p-2 border rounded" />
                             <input name="residente_ci" value={formData.residente_ci} onChange={handleChange} placeholder="CI del Residente" required className="p-2 border rounded" />
-                            <input type="email" name="residente_email" value={formData.residente_email} onChange={handleChange} placeholder="Email del Residente" required className="p-2 border rounded" />
                             <select name="residente_tipo" value={formData.residente_tipo} onChange={handleChange} className="p-2 border rounded">
                                 <option value="Propietario">Propietario</option>
                                 <option value="Inquilino">Inquilino</option>
                                 <option value="Otro">Otro</option>
                             </select>
+                        </div>
+                        <div className="mt-4">
+                            <label className="flex items-center">
+                                <input type="checkbox" checked={useDifferentContactEmail} onChange={handleCheckboxChange} className="form-checkbox" />
+                                <span className="ml-2 text-sm text-gray-600">Usar un email de contacto diferente al de la cuenta</span>
+                            </label>
+                            {useDifferentContactEmail && (
+                                <input type="email" name="residente_email_contacto" value={formData.residente_email_contacto} onChange={handleChange} placeholder="Email de contacto del residente" required className="mt-2 p-2 w-full border rounded" />
+                            )}
                         </div>
                     </div>
                 )}
@@ -165,34 +180,20 @@ const CreateUserPage = () => {
                      <div className="p-4 border rounded-md">
                         <h2 className="text-lg font-semibold mb-4">Datos del Empleado</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input name="empleado_nombre" value={formData.empleado_nombre} onChange={handleChange} placeholder="Nombre del Empleado" required className="p-2 border rounded" />
-                            <input name="empleado_apellido" value={formData.empleado_apellido} onChange={handleChange} placeholder="Apellido del Empleado" required className="p-2 border rounded" />
                             <input name="empleado_ci" value={formData.empleado_ci} onChange={handleChange} placeholder="CI del Empleado" required className="p-2 border rounded" />
-                            <input name="empleado_telefono" value={formData.empleado_telefono} onChange={handleChange} placeholder="Teléfono" className="p-2 border rounded" />
-                            <input name="empleado_direccion" value={formData.empleado_direccion} onChange={handleChange} placeholder="Dirección" className="p-2 border rounded" />
-                            <select name="empleado_cargo" value={formData.empleado_cargo} onChange={handleChange} className="p-2 border rounded" required>
+                            <select name="empleado_cargo" value={formData.empleado_cargo} onChange={handleChange} required className="p-2 border rounded">
                                 <option value="" disabled>Seleccione un cargo...</option>
-                                {cargos.map(cargo => (
-                                    <option key={cargo.id} value={cargo.id}>{cargo.cargo}</option>
-                                ))}
+                                {cargos.map(cargo => (<option key={cargo.id} value={cargo.id}>{cargo.cargo}</option>))}
                             </select>
+                            <input name="empleado_telefono" value={formData.empleado_telefono} onChange={handleChange} placeholder="Teléfono" className="p-2 border rounded" />
+                            <input name="empleado_direccion" value={formData.empleado_direccion} onChange={handleChange} placeholder="Dirección" className="p-2 border rounded md:col-span-2" />
                         </div>
                     </div>
                 )}
 
-                {/* --- Errores y Botón de Envío --- */}
-                {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                        <strong className="font-bold">Error: </strong>
-                        <span className="block sm:inline">{JSON.stringify(error)}</span>
-                    </div>
-                )}
-                
-                <div className="flex justify-end">
-                    <button type="submit" className="bg-blue-500 text-white font-bold py-2 px-6 rounded hover:bg-blue-600">
-                        Crear Usuario
-                    </button>
-                </div>
+                {/* Errores y Botón de Envío */}
+                {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{JSON.stringify(error)}</div>}
+                <div className="flex justify-end"><button type="submit" className="bg-blue-500 text-white font-bold py-2 px-6 rounded hover:bg-blue-600">Crear Usuario</button></div>
             </form>
         </div>
     );
