@@ -1,13 +1,13 @@
 import React from 'react';
 import ModuleCard from '../components/dashboard/ModuleCard';
-import { FaBuilding, FaFileInvoiceDollar, FaBriefcase } from 'react-icons/fa'; // Añadimos FaBriefcase
+import { FaBuilding, FaFileInvoiceDollar, FaBriefcase, FaTasks } from 'react-icons/fa'; // Añadimos FaTasks
 
 const InternalAdminLandingPage = () => {
     const options = [
         { id: 1, title: 'Gestión de Unidades', icon: <FaBuilding />, color: 'gray', path: '/units' },
         { id: 2, title: 'Panel de Multas', icon: <FaFileInvoiceDollar />, color: 'red', path: '/internal-admin/fines' },
-        // --- NUEVA TARJETA AÑADIDA ---
         { id: 3, title: 'Gestión de Cargos', icon: <FaBriefcase />, color: 'yellow', path: '/internal-admin/cargos' },
+        { id: 4, title: 'Gestión de Tareas', icon: <FaTasks />, color: 'purple', path: '/tareas' }, // Nuevo
     ];
 
     return (

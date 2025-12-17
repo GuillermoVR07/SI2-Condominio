@@ -9,7 +9,8 @@ import {
     FaComments, 
     FaShieldAlt, 
     FaChartBar, 
-    FaBook 
+    FaBook,
+    FaTasks
 } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -17,6 +18,7 @@ const Sidebar = () => {
     { id: 1, name: 'Inicio', icon: <FaHome />, path: '/' },
     { id: 2, name: 'Usuarios', icon: <FaUsers />, path: '/users' },
     { id: 3, name: 'Administración Interna', icon: <FaCog />, path: '/internal-admin' },
+    { id: 9, name: 'Gestión de Tareas', icon: <FaTasks />, path: '/tareas' },
     { id: 4, name: 'Finanzas', icon: <FaDollarSign />, path: '/finanzas/pagos' },
     { id: 10, name: 'Áreas Comunes', icon: <FaTree />, path: '/areas-comunes' }, 
     { id: 5, name: 'Comunicación y Atención al Residente', icon: <FaComments />, path: '/communications' },

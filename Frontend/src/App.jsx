@@ -31,6 +31,7 @@ import ClaimsPage from './pages/ClaimsPage';
 import SecurityLogsPage from './pages/SecurityLogsPage';
 import LogbookPage from './pages/LogbookPage';
 import SecurityAnalysisPage from './pages/SecurityAnalysisPage'; // Import the new page
+import TareasPage from './pages/TareasPage';
 
 // Componente que agrupa las rutas protegidas
 const ProtectedRoutes = () => (
@@ -59,6 +60,7 @@ const ProtectedRoutes = () => (
       <Route path="/registros-seguridad" element={<SecurityLogsPage />} />
       <Route path="/bitacora" element={<LogbookPage />} />
       <Route path="/security" element={<SecurityAnalysisPage />} /> {/* Add the new route */}
+      <Route path="/tareas" element={<TareasPage />} />
       {/* La ruta /users/create ya no existe aquí */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
