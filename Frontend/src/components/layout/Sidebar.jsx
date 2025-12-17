@@ -20,7 +20,7 @@ const Sidebar = () => {
     { id: 4, name: 'Finanzas', icon: <FaDollarSign />, path: '/finanzas/pagos' },
     { id: 10, name: 'Áreas Comunes', icon: <FaTree />, path: '/areas-comunes' }, 
     { id: 5, name: 'Comunicación y Atención al Residente', icon: <FaComments />, path: '/communications' },
-    { id: 6, name: 'Seguridad y Accesos', icon: <FaShieldAlt />, path: '#' },
+    { id: 6, name: 'Seguridad y Accesos', icon: <FaShieldAlt />, path: '/security' },
     { id: 7, name: 'Comunidad y Reportes', icon: <FaChartBar />, path: '/comunidad-y-reportes' },
     { id: 8, name: 'Bitácora', icon: <FaBook />, path: '/bitacora' },
   ];
