@@ -30,8 +30,9 @@ import CommunityReportsLandingPage from './pages/CommunityReportsLandingPage';
 import ClaimsPage from './pages/ClaimsPage';
 import SecurityLogsPage from './pages/SecurityLogsPage';
 import LogbookPage from './pages/LogbookPage';
-import SecurityAnalysisPage from './pages/SecurityAnalysisPage'; // Import the new page
+import SecurityAnalysisPage from './pages/SecurityAnalysisPage';
 import TareasPage from './pages/TareasPage';
+import RegistrosAccesosPage from './pages/RegistrosAccesosPage'; // Import the new page
 
 // Componente que agrupa las rutas protegidas
 const ProtectedRoutes = () => (
@@ -59,8 +60,9 @@ const ProtectedRoutes = () => (
       <Route path="/reclamos" element={<ClaimsPage />} />
       <Route path="/registros-seguridad" element={<SecurityLogsPage />} />
       <Route path="/bitacora" element={<LogbookPage />} />
-      <Route path="/security" element={<SecurityAnalysisPage />} /> {/* Add the new route */}
+      <Route path="/security" element={<SecurityAnalysisPage />} />
       <Route path="/tareas" element={<TareasPage />} />
+      <Route path="/registros-accesos" element={<RegistrosAccesosPage />} /> {/* Add the new route */}
       {/* La ruta /users/create ya no existe aquí */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
