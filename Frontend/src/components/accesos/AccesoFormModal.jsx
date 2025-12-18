@@ -5,7 +5,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
 
-const AccesoFormModal = ({ isOpen, onClose, onSave, registro }) => {
+const AccesoFormModal = ({ isOpen, onClose, onSave, registro, apiError }) => {
     const initialState = {
         tipo_persona: 'Residente',
         nombre_completo: '',
@@ -299,6 +299,12 @@ const AccesoFormModal = ({ isOpen, onClose, onSave, registro }) => {
     return (
         <Modal title={registro ? 'Editar Registro de Acceso' : 'Nuevo Registro de Acceso'} onClose={onClose}>
             <form onSubmit={handleSubmit} className="space-y-4">
+                {apiError && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <strong className="font-bold">Error: </strong>
+                        <span className="block sm:inline">{apiError}</span>
+                    </div>
+                )}
                 <Select
                     label="Tipo de Persona"
                     name="tipo_persona"

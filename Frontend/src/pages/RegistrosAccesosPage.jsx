@@ -16,6 +16,7 @@ const RegistrosAccesosPage = () => {
     const [registros, setRegistros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [formError, setFormError] = useState(null); // To show errors in the modal
     
     // State for modals
     const [currentRegistro, setCurrentRegistro] = useState(null);
@@ -60,11 +61,13 @@ const RegistrosAccesosPage = () => {
     // Handlers for opening modals
     const handleNew = () => {
         setCurrentRegistro(null);
+        setFormError(null); // Clear previous errors
         setIsFormModalOpen(true);
     };
 
     const handleEdit = (registro) => {
         setCurrentRegistro(registro);
+        setFormError(null); // Clear previous errors
         setIsFormModalOpen(true);
     };
 
@@ -78,19 +81,44 @@ const RegistrosAccesosPage = () => {
         const isEditing = !!currentRegistro;
         const url = isEditing ? `${API_URL}${currentRegistro.id}/` : API_URL;
         const method = isEditing ? 'put' : 'post';
+        
+        setFormError(null); // Reset error before new attempt
 
         try {
             // Note: axios automatically sets Content-Type to multipart/form-data for FormData
             await axios[method](url, formData); 
             addLogEntry(
                 isEditing ? 'Registro de Acceso Editado' : 'Nuevo Registro de Acceso Creado',
-                `ID: ${currentRegistro?.id || 'Nuevo'}, Persona: ${formData.nombre_completo}`
+                `ID: ${currentRegistro?.id || 'Nuevo'}, Persona: ${formData.get('nombre_completo')}`
             );
             setIsFormModalOpen(false);
             fetchData(); // Refresh data
         } catch (err) {
             console.error("Error saving access log:", err.response?.data || err);
-            setError("No se pudo guardar el registro de acceso.");
+            const errorData = err.response?.data;
+            let errorMessage = "Ocurrió un error inesperado al guardar.";
+
+            if (errorData) {
+                // Handle DRF's non-field errors (often an array of strings)
+                if (errorData.non_field_errors) {
+                    errorMessage = errorData.non_field_errors.join(' ');
+                } 
+                // Handle simple string or array responses
+                else if (Array.isArray(errorData)) {
+                    errorMessage = errorData.join(' ');
+                }
+                // Handle field-specific errors (object)
+                else if (typeof errorData === 'object') {
+                    const firstErrorKey = Object.keys(errorData)[0];
+                    const firstErrorMessage = errorData[firstErrorKey];
+                    if(Array.isArray(firstErrorMessage)){
+                        errorMessage = `${firstErrorKey}: ${firstErrorMessage[0]}`;
+                    } else {
+                        errorMessage = `${firstErrorKey}: ${firstErrorMessage}`;
+                    }
+                }
+            }
+            setFormError(errorMessage);
         }
     };
 
@@ -138,6 +166,7 @@ const RegistrosAccesosPage = () => {
                     onClose={() => setIsFormModalOpen(false)}
                     onSave={handleSave}
                     registro={currentRegistro}
+                    apiError={formError}
                 />
             )}
 
